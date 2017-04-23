@@ -31,6 +31,7 @@ def lenet_network(X_train,y_train,model_name='lenet_default.h5'):
     model.save(model_name)
    
 def main():
+    STEERING_FACTOR=[0,-0.2,0.2]
     lines = []
     with open('./myData/data/driving_log.csv') as csvfile:
         reader = csv.reader(csvfile)
@@ -40,21 +41,28 @@ def main():
     images = []
     measurements = []
     for line in lines:
-        source_path = line[0]
+      for i in range(3):
+        source_path = line[i]
         filename = source_path.split('\\')[-1]
         current_path = './myData/data/IMG/'+filename
         if not (line[3] == 'steering'):
             image = cv2.imread(current_path)
             images.append(image)
             measurement = float(line[3])
-            measurements.append(measurement)
+            measurements.append(measurement+STEERING_FACTOR[i])
         else:
             print(line)
-    X_train = np.array(images)
-    y_train = np.array(measurements)
+    augmented_images, augmented_measurements = [],[]
+    for image,measurement in zip(images,measurements):
+        augmented_images.append(image)
+        augmented_measurements.append(measurement)
+        augmented_images.append(cv2.flip(image,1))
+        augmented_measurements.append(measurement*-1.0)
+    X_train = np.array(augmented_images)
+    y_train = np.array(augmented_measurements)
     print("Training :")
     print(X_train.shape)
-    lenet_network(X_train,y_train,'lenet_2204171447.h5')
+    lenet_network(X_train,y_train,'lenet_data_2304171256.h5')
 
 if __name__ == "__main__":
     main()
