@@ -2,14 +2,14 @@ import csv
 import cv2
 import numpy as np
 from keras.models import Sequential
-from keras.layers import Flatten,Dense,Lambda
+from keras.layers import Flatten,Dense,Lambda,Cropping2D
 from keras.layers.convolutional import Convolution2D
 from keras.layers.pooling import MaxPooling2D
 
 def basic_network(X_train,y_train):
     model = Sequential();
     model.add(Lambda(lambda x: x/255.0,input_shape=(160,320,3)))
-    model.add(Flatten(input_shape=(160,320,3)))
+    model.add(Flatten())
     model.add(Dense(1))
     model.compile(loss='mse',optimizer='adam')
     model.fit(X_train,y_train, validation_split=0.2,shuffle=True,nb_epoch=7)
@@ -18,6 +18,7 @@ def basic_network(X_train,y_train):
 def lenet_network(X_train,y_train,model_name='lenet_default.h5'):
     model = Sequential();
     model.add(Lambda(lambda x: x/255.0,input_shape=(160,320,3)))
+    model.add(Cropping2D(cropping=((70,0),(0,0))))
     model.add(Convolution2D(6,5,5,activation='relu'))
     model.add(MaxPooling2D())
     model.add(Convolution2D(6,5,5,activation='relu'))
@@ -29,7 +30,24 @@ def lenet_network(X_train,y_train,model_name='lenet_default.h5'):
     model.compile(loss='mse',optimizer='adam')
     model.fit(X_train,y_train, validation_split=0.2,shuffle=True,nb_epoch=7)
     model.save(model_name)
-   
+
+def nvidia_network(X_train,y_train,model_name="nvidia_default.h5"):
+    model = Sequential()
+    model.add(Lambda(lambda x: x / 255.0, input_shape=(160,320,3)))
+    model.add(Cropping2D(cropping=((70,0),(0,0)))) 
+    model.add(Convolution2D(24,5,5,subsample=(2,2),activation="relu"))  
+    model.add(Convolution2D(36,5,5,subsample=(2,2),activation="relu"))   
+    model.add(Convolution2D(48,5,5,subsample=(2,2),activation="relu"))   
+    model.add(Convolution2D(64,3,3,activation="relu"))   
+    model.add(Convolution2D(64,3,3,activation="relu"))   
+    model.add(Flatten())
+    model.add(Dense(100))
+    model.add(Dense(50))
+    model.add(Dense(1))
+    model.compile(loss='mse',optimizer='adam')
+    model.fit(X_train,y_train, validation_split=0.2,shuffle=True,nb_epoch=5)
+    model.save(model_name)
+
 def main():
     STEERING_FACTOR=[0,-0.2,0.2]
     lines = []
@@ -62,7 +80,7 @@ def main():
     y_train = np.array(augmented_measurements)
     print("Training :")
     print(X_train.shape)
-    lenet_network(X_train,y_train,'lenet_data_2304171256.h5')
+    nvidia_network(X_train,y_train,'nvidia_data_2604172338_cropping.h5')
 
 if __name__ == "__main__":
     main()
